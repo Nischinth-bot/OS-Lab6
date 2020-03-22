@@ -7,14 +7,19 @@
 #include <math.h>
 #include "fileHandle.h"
 #include "config.h"
-
 static void printUsage();
 static void parseArgs(int argc, char * argv[], char ** target, int * threads);
-struct arg_struct{
+static void getAllFiles(char * target, int depth);
+
+struct arg_struct{ 
     int tid;
     int numDirs;
     char ** dirs;
 };
+
+//Global variables
+char ** globalFileList;
+char ** globalDirs;
 /*
  * printUsage
  * prints the usage information and exits
@@ -56,13 +61,34 @@ void parseArgs(int argc, char * argv[], char ** target, int * threads)
     }
 }
 
-
 /**
- *
+ * Recursive function that traverses all subdirectories 
+ * of the given target and generates a comprehensive file list.
+ * The search is performed up to a depth of MAXDEPTH.
+ * @param: target - Takes as input the target directory
+ * @return: list of all files in all subdirectories
  */
-void threadMonitor(void * arg){
+void getAllFiles(char* target, int depth){
+    if(depth  > MAXDEPTH) return;
+    int fileCount = getFileCount(target); 
+    int dirCount = getDirectoryCount(target);
+    int i;
+    if(fileCount > 0){
+        char ** fileList = (char **) malloc(sizeof(char*)* fileCount); 
+        getFileList(target,fileList,fileCount);
+        for(i = 0; i < fileCount; i ++){
+            printf("%s\n", fileList[i]);    
+        }
+    }
+    if(dirCount > 0){
+        char ** dirList;
+        dirList = (char **) malloc(sizeof(char *) * dirCount);
+        getDirectoryList(target,dirList,dirCount);
+        for(i = 0; i < dirCount; i ++){
+            getAllFiles(dirList[i], depth + 1);
+        }
+    }
 }
-
 /*
  * main
  * The main is very incomplete.
@@ -78,26 +104,25 @@ int main (int argc, char *argv[])
     char ** dirs;
     int dirCt; 
 
+
     parseArgs(argc, argv, &target, &nThreads);
     dirCt = getDirectoryCount(target);
     if (nThreads > dirCt) nThreads = dirCt;   
     dirs = (char **) malloc(sizeof(char *) * dirCt);
     getDirectoryList(target, dirs, dirCt);
-    for (i = 0; i < dirCt; i++) printf("dirs[%d] = %s\n", i, dirs[i]); 
-
-
-    /**Code for threading**/
+    /**Set up for threading**/
     pthread_t threads[nThreads]; //Array of threads.
     struct arg_struct args[nThreads];
     int startIndex = 0;
     int endIndex = 0;
     int eachThread = dirCt/nThreads; //Number of directories per thread.
-    int dirsRemaining = dirCt % nThreads;
-
+    int dirsRemaining = dirCt % nThreads; 
+    /*************************************************************/
+    /**Code for dividing up the directories between threads**/
     for (i = 0; i < nThreads; i ++){
         endIndex = startIndex + eachThread - 1;
-          if(i == nThreads - 1 && dirsRemaining > 0) {
-            eachThread += dirsRemaining; //Accomadate remaining threads, if they exist 
+        if(i == nThreads - 1 && dirsRemaining > 0) {
+            eachThread += dirsRemaining; //Accomodate remaining threads, if they exist 
             endIndex += dirsRemaining; //Change the index for iteration
         }
         char * threadDirs[eachThread]; //Array of char pointers passed to each thread. 
@@ -107,13 +132,11 @@ int main (int argc, char *argv[])
         }
         args[i].tid = i;
         args[i].numDirs = eachThread;
-        args[i].dirs = threadDirs;
-        int k;
-        for(j = 0; j < eachThread; j ++){
-            printf("%d %s\n", i, threadDirs[j]); 
-        }
+        args[i].dirs = threadDirs; 
         startIndex = endIndex + 1;
     }
+    /*************************************************************/
+    getAllFiles(target,0);
 
     return 0;
 }
