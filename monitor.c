@@ -20,6 +20,7 @@ struct arg_struct{
 //Global variables
 char ** globalFileList;
 char ** globalDirs;
+int globalFileIndex;
 /*
  * printUsage
  * prints the usage information and exits
@@ -65,10 +66,12 @@ void parseArgs(int argc, char * argv[], char ** target, int * threads)
  * Recursive function that traverses all subdirectories 
  * of the given target and generates a comprehensive file list.
  * The search is performed up to a depth of MAXDEPTH.
- * @param: target - Takes as input the target directory
+ * @param: target - The target directory.
+ * @param: depth - the depth of the current iteration.
  * @return: list of all files in all subdirectories
  */
-void getAllFiles(char* target, int depth){
+void getAllFiles(char* target, int depth)
+{
     if(depth  > MAXDEPTH) return;
     int fileCount = getFileCount(target); 
     int dirCount = getDirectoryCount(target);
@@ -77,16 +80,23 @@ void getAllFiles(char* target, int depth){
         char ** fileList = (char **) malloc(sizeof(char*)* fileCount); 
         getFileList(target,fileList,fileCount);
         for(i = 0; i < fileCount; i ++){
-            printf("%s\n", fileList[i]);    
+            globalFileList[globalFileIndex++] = fileList[i]; //collect the files into the global variable
         }
     }
     if(dirCount > 0){
-        char ** dirList;
-        dirList = (char **) malloc(sizeof(char *) * dirCount);
+        char ** dirList = (char **) malloc(sizeof(char *) * dirCount);
         getDirectoryList(target,dirList,dirCount);
         for(i = 0; i < dirCount; i ++){
             getAllFiles(dirList[i], depth + 1);
         }
+    }
+}
+
+void printAllFiles()
+{
+    int i;
+    for(i = 0 ; i < globalFileIndex; i ++){
+        printf("%s\n",globalFileList[i]);
     }
 }
 /*
@@ -136,8 +146,9 @@ int main (int argc, char *argv[])
         startIndex = endIndex + 1;
     }
     /*************************************************************/
+    globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
     getAllFiles(target,0);
-
+    printAllFiles();
     return 0;
 }
 
