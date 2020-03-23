@@ -11,7 +11,7 @@
 struct arg_struct{ 
     int tid;
     int numDirs;
-    char ** dirs;
+    char *dirs[MAXDIRS];
 };
 
 
@@ -25,7 +25,7 @@ static int fileInDir(char * file, char* dir);
 //Global variables
 char ** globalFileList;
 char ** globalDirs;
-struct arg_struct * globalArgs;
+struct arg_struct  globalArgs[100];
 int globalFileIndex;
 int globalThreadCount;
 /*
@@ -99,6 +99,9 @@ void getAllFiles(char* target, int depth)
     }
 }
 
+/**
+ * Helper method to print the global file list.
+ */
 void printAllFiles()
 {
     int i;
@@ -109,6 +112,14 @@ void printAllFiles()
     }
 }
 
+
+/**
+ * Helper method to print directories belonging to a thread.
+ */
+void printDirs(struct arg_struct arg){
+    int i;
+    for(i = 0; i < arg.numDirs; i ++) printf("%s\n", arg.dirs[i]);
+}
 /**
  * @param: file - a pointer to a file.
  * @param: nThreads - number of active threads
@@ -135,7 +146,6 @@ int getTID(char * file)
  * @return: 1 upon success, 0 upon failure.
  */
 int fileInDir(char * file, char* dir){
-    printf("%s\n", dir);
     int fileCount = getFileCount(dir);
     if(fileCount <= 0 ) return 0;
     char** fileList = (char **) malloc (sizeof(char*) * fileCount);
@@ -168,16 +178,19 @@ int main (int argc, char *argv[])
     if (nThreads > dirCt) nThreads = dirCt;   
     dirs = (char **) malloc(sizeof(char *) * dirCt);
     getDirectoryList(target, dirs, dirCt);
-    /**Set up for threading**/
+    /**Set up for threading**/ 
+    //  globalArgs = malloc(sizeof(struct arg_struct) * nThreads);
     pthread_t threads[nThreads]; //Array of threads.
-    struct arg_struct args[nThreads];
-    globalArgs = args; //set globalArgs pointer to this array
     globalThreadCount = nThreads; //make available the number of threads globally for iteration.
-    int startIndex = 0;
+    int startIndex = 0;    
     int endIndex = 0;
     int eachThread = dirCt/nThreads; //Number of directories per thread.
     int dirsRemaining = dirCt % nThreads; 
+
+
     /*************************************************************/
+
+
     /**Code for dividing up the directories between threads**/
     for (i = 0; i < nThreads; i ++){
         endIndex = startIndex + eachThread - 1;
@@ -185,22 +198,21 @@ int main (int argc, char *argv[])
             eachThread += dirsRemaining; //Accomodate remaining threads, if they exist 
             endIndex += dirsRemaining; //Change the index for iteration
         }
-        char * threadDirs[eachThread]; //Array of char pointers passed to each thread. 
+        char * threadDirs[MAXDIRS]; //Array of char pointers passed to each thread. 
         int j = 0;
         for(j = startIndex; j <= endIndex; j ++){
             threadDirs[j - startIndex] = dirs[j];
         }
-        args[i].tid = i;
-        args[i].numDirs = eachThread;
-        args[i].dirs = malloc(sizeof(char*) * eachThread);
-        args[i].dirs = threadDirs;  
+        globalArgs[i].tid = i;
+        globalArgs[i].numDirs = eachThread;
+        for(j = 0; j < eachThread; j ++) globalArgs[i].dirs[j] = threadDirs[j]; //Set the directories in the argument.
         startIndex = endIndex + 1;
     }
     /*************************************************************/ 
+
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
-    getAllFiles(target,0);
-    printf("%s\n", globalFileList[1]);
-    int tid = getTID(globalFileList[1]);
+    getAllFiles(target,0); 
+    int tid = getTID(globalFileList[10]);
     printf("%d\n", tid);
     return 0;
 }
