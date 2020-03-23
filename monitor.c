@@ -7,9 +7,6 @@
 #include <math.h>
 #include "fileHandle.h"
 #include "config.h"
-static void printUsage();
-static void parseArgs(int argc, char * argv[], char ** target, int * threads);
-static void getAllFiles(char * target, int depth);
 
 struct arg_struct{ 
     int tid;
@@ -17,10 +14,20 @@ struct arg_struct{
     char ** dirs;
 };
 
+
+static void printUsage();
+static void parseArgs(int argc, char * argv[], char ** target, int * threads);
+static void getAllFiles(char * target, int depth);
+static int getTID(char * file);
+static int fileInDir(char * file, char* dir);
+
+
 //Global variables
 char ** globalFileList;
 char ** globalDirs;
+struct arg_struct * globalArgs;
 int globalFileIndex;
+int globalThreadCount;
 /*
  * printUsage
  * prints the usage information and exits
@@ -96,9 +103,50 @@ void printAllFiles()
 {
     int i;
     for(i = 0 ; i < globalFileIndex; i ++){
-        printf("%s\n",globalFileList[i]);
+        char * file  = globalFileList[i];
+        int tid = getTID(file);
+        printf("%d %s\n", tid, globalFileList[i]);
     }
 }
+
+/**
+ * @param: file - a pointer to a file.
+ * @param: nThreads - number of active threads
+ * @return: TID of the thred that is monitoring the file upon discovery, else -1.
+ */
+int getTID(char * file)
+{
+    int i;
+    for(i = 0; i < globalThreadCount; i ++){
+        struct arg_struct arg = globalArgs[i];
+        char ** dirs = arg.dirs;
+        int j;
+        for(j = 0; j < arg.numDirs; j ++){
+            if(fileInDir(file,dirs[j])) return arg.tid;
+        }
+    }
+    return -1;
+}
+
+/**
+ * Checks if a file is present in a directory
+ * @param: file - a pointer to a file.
+ * @param: dir - a pointer to a directory.
+ * @return: 1 upon success, 0 upon failure.
+ */
+int fileInDir(char * file, char* dir){
+    printf("%s\n", dir);
+    int fileCount = getFileCount(dir);
+    if(fileCount <= 0 ) return 0;
+    char** fileList = (char **) malloc (sizeof(char*) * fileCount);
+    getFileList(dir,fileList,fileCount);
+    int i;
+    for(i = 0; i < fileCount; i ++){
+        if(strcmp(fileList[i], file) == 0) return 1;
+    }
+    return 0;
+}
+
 /*
  * main
  * The main is very incomplete.
@@ -123,6 +171,8 @@ int main (int argc, char *argv[])
     /**Set up for threading**/
     pthread_t threads[nThreads]; //Array of threads.
     struct arg_struct args[nThreads];
+    globalArgs = args; //set globalArgs pointer to this array
+    globalThreadCount = nThreads; //make available the number of threads globally for iteration.
     int startIndex = 0;
     int endIndex = 0;
     int eachThread = dirCt/nThreads; //Number of directories per thread.
@@ -142,13 +192,16 @@ int main (int argc, char *argv[])
         }
         args[i].tid = i;
         args[i].numDirs = eachThread;
-        args[i].dirs = threadDirs; 
+        args[i].dirs = malloc(sizeof(char*) * eachThread);
+        args[i].dirs = threadDirs;  
         startIndex = endIndex + 1;
     }
-    /*************************************************************/
+    /*************************************************************/ 
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
     getAllFiles(target,0);
-    printAllFiles();
+    printf("%s\n", globalFileList[1]);
+    int tid = getTID(globalFileList[1]);
+    printf("%d\n", tid);
     return 0;
 }
 
