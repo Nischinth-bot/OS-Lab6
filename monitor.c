@@ -5,29 +5,17 @@
 #include <assert.h>
 #include <dirent.h>
 #include <math.h>
-#include "fileHandle.h"
 #include "config.h"
+#include "fileHandle.h"
+#include "mainThread.h"
 
-struct arg_struct{ 
-    int tid;
-    int numDirs;
-    char *dirs[MAXDIRS];
-};
+
 
 
 static void printUsage();
 static void parseArgs(int argc, char * argv[], char ** target, int * threads);
-static void getAllFiles(char * target, int depth);
-static int getTID(char * file);
-static int fileInDir(char * file, char* dir);
 
 
-//Global variables
-char ** globalFileList;
-char ** globalDirs;
-struct arg_struct  globalArgs[100];
-int globalFileIndex;
-int globalThreadCount;
 /*
  * printUsage
  * prints the usage information and exits
@@ -68,95 +56,6 @@ void parseArgs(int argc, char * argv[], char ** target, int * threads)
             printUsage();
     }
 }
-
-/**
- * Recursive function that traverses all subdirectories 
- * of the given target and generates a comprehensive file list.
- * The search is performed up to a depth of MAXDEPTH.
- * @param: target - The target directory.
- * @param: depth - the depth of the current iteration.
- * @return: list of all files in all subdirectories
- */
-void getAllFiles(char* target, int depth)
-{
-    if(depth  > MAXDEPTH) return;
-    int fileCount = getFileCount(target); 
-    int dirCount = getDirectoryCount(target);
-    int i;
-    if(fileCount > 0){
-        char ** fileList = (char **) malloc(sizeof(char*)* fileCount); 
-        getFileList(target,fileList,fileCount);
-        for(i = 0; i < fileCount; i ++){
-            globalFileList[globalFileIndex++] = fileList[i]; //collect the files into the global variable
-        }
-    }
-    if(dirCount > 0){
-        char ** dirList = (char **) malloc(sizeof(char *) * dirCount);
-        getDirectoryList(target,dirList,dirCount);
-        for(i = 0; i < dirCount; i ++){
-            getAllFiles(dirList[i], depth + 1);
-        }
-    }
-}
-
-/**
- * Helper method to print the global file list.
- */
-void printAllFiles()
-{
-    int i;
-    for(i = 0 ; i < globalFileIndex; i ++){
-        char * file  = globalFileList[i];
-        int tid = getTID(file);
-        printf("%d %s\n", tid, globalFileList[i]);
-    }
-}
-
-
-/**
- * Helper method to print directories belonging to a thread.
- */
-void printDirs(struct arg_struct arg){
-    int i;
-    for(i = 0; i < arg.numDirs; i ++) printf("%s\n", arg.dirs[i]);
-}
-/**
- * @param: file - a pointer to a file.
- * @param: nThreads - number of active threads
- * @return: TID of the thred that is monitoring the file upon discovery, else -1.
- */
-int getTID(char * file)
-{
-    int i;
-    for(i = 0; i < globalThreadCount; i ++){
-        struct arg_struct arg = globalArgs[i];
-        char ** dirs = arg.dirs;
-        int j;
-        for(j = 0; j < arg.numDirs; j ++){
-            if(fileInDir(file,dirs[j])) return arg.tid;
-        }
-    }
-    return -1;
-}
-
-/**
- * Checks if a file is present in a directory
- * @param: file - a pointer to a file.
- * @param: dir - a pointer to a directory.
- * @return: 1 upon success, 0 upon failure.
- */
-int fileInDir(char * file, char* dir){
-    int fileCount = getFileCount(dir);
-    if(fileCount <= 0 ) return 0;
-    char** fileList = (char **) malloc (sizeof(char*) * fileCount);
-    getFileList(dir,fileList,fileCount);
-    int i;
-    for(i = 0; i < fileCount; i ++){
-        if(strcmp(fileList[i], file) == 0) return 1;
-    }
-    return 0;
-}
-
 /*
  * main
  * The main is very incomplete.
@@ -212,8 +111,11 @@ int main (int argc, char *argv[])
 
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
     getAllFiles(target,0); 
-    int tid = getTID(globalFileList[10]);
-    printf("%d\n", tid);
+    printAllFiles();
+  
+    
+  //    int tid = getTID(globalFileList[10]);
+  //  printf("%d\n", tid);
     return 0;
 }
 
