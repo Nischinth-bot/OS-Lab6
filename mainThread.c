@@ -23,6 +23,7 @@ void getAllFiles(char* target, int depth)
         char ** fileList = (char **) malloc(sizeof(char*)* fileCount); 
         getFileList(target,fileList,fileCount);
         for(i = 0; i < fileCount; i ++){
+            numFiles ++;
             globalFileList[globalFileIndex++] = fileList[i]; //collect the files into the global variable
         }
     }
@@ -44,7 +45,8 @@ void printAllFiles()
     for(i = 0 ; i < globalFileIndex; i ++){
         char * file  = globalFileList[i];
         int tid = getTID(file);
-        printf("%d %s\n", tid, globalFileList[i]);
+        int size = getFileSize(file);
+        printf("[%d] %d  %s\n", tid, size,  globalFileList[i]);
     }
 }
 
@@ -108,10 +110,58 @@ void fileInDir(char * file, char* dir)
         getDirectoryList(dir,dirList,dirCount);
         int i;
         for(i = 0; i < dirCount; i ++){
-           // printf("%s\n", dirList[i]);   
+            // printf("%s\n", dirList[i]);   
             fileInDir(file,dirList[i]);
         }
     }
     return;
 }
 
+/**
+ * Comparison function for inbuilt sort.
+ * @param: file1 
+ * @param: file2 
+ * @return: 1 if size of file1 > file2, 0 otherwise
+ */
+int comp(char* file1, char* file2)
+{ 
+    int size1 = getFileSize(file1);
+    int size2 = getFileSize(file2);
+    if(size1 < size2) return 1;
+    if(size1 > size2) return -1;    
+    return 0;
+}
+
+/**
+ * Swap function for bubble sort. 
+ */
+void swap(char** file1, char** file2)
+{
+    //printf("Swapping %s with %s\n", file1,file2);
+    char* temp = *file1;
+    *file1 = *file2;
+    *file2 = temp;
+}
+
+/**
+ * Calls the qsort function in stdlib.
+ */
+void sortFileList()
+{
+    int finished = 0;
+    
+    while(!finished){
+        int i;
+        int didSwap = 0;
+        for(i = 0; i < numFiles - 1; i ++){              
+            char ** file1 = &globalFileList[i];
+            char ** file2 = &globalFileList[i + 1];
+            if(comp(*file1,*file2) == 1) {
+                swap(file1,file2);
+                didSwap = 1;           
+            } 
+            
+        finished = !didSwap;
+        }
+    }
+}
