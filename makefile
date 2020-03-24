@@ -4,7 +4,9 @@ LDLIBS = -lpthread
 .c.o:
 	$(CC) $(CFLAGS) $< -o $@
 
-monitor: monitor.o fileHandle.o 
+monitor: monitor.o fileHandle.o mainThread.o
+
+mainThread.o : mainThread.h config.h fileHandle.h
 
 fileHandler.o: fileHandle.h config.h
 
