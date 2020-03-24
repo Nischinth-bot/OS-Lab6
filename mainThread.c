@@ -4,7 +4,7 @@
 #include "config.h"
 #include "fileHandle.h"
 #include "mainThread.h"
-
+int signal = 0;
 /**
  * Recursive function that traverses all subdirectories 
  * of the given target and generates a comprehensive file list.
@@ -51,9 +51,13 @@ void printAllFiles()
 /**
  * Helper method to print directories belonging to a thread.
  */
-void printDirs(struct arg_struct arg){
+void printDirs(char * dir){
+    int count = getDirectoryCount(dir);
+    if(count == 0) return;
+    char ** dirs = malloc(sizeof(char*) * count);
+    getDirectoryList(dir,dirs,count);
     int i;
-    for(i = 0; i < arg.numDirs; i ++) printf("%s\n", arg.dirs[i]);
+    for(i = 0; i < count; i ++) { printf("%s\n", dirs[i]);}
 }
 /**
  * Recursive function that traces the TID of a given file.
@@ -68,7 +72,11 @@ int getTID(char * file)
         struct arg_struct arg = globalArgs[i];
         int j;
         for(j = 0; j < arg.numDirs; j ++){
-            if(fileInDir(file,arg.dirs[j])) return arg.tid;
+            fileInDir(file,arg.dirs[j]);
+            if(signal == 1){
+                signal = 0;
+                return arg.tid;
+            }
         }
     }
     return -1;
@@ -80,8 +88,8 @@ int getTID(char * file)
  * @param: dir - a pointer to a directory.
  * @return: 1 upon success, 0 upon failure.
  */
-int fileInDir(char * file, char* dir)
-{   
+void fileInDir(char * file, char* dir)
+{
     int fileCount = getFileCount(dir);
     int dirCount = getDirectoryCount(dir);
     if(fileCount > 0){
@@ -89,7 +97,10 @@ int fileInDir(char * file, char* dir)
         getFileList(dir,fileList,fileCount);
         int j;
         for(j = 0; j < fileCount; j++){
-            if(strcmp(fileList[j],file) == 0) return 1;
+            if(strcmp(fileList[j],file) == 0){
+                signal = 1;
+                return;
+            }
         }
     } 
     if(dirCount > 0){
@@ -97,9 +108,10 @@ int fileInDir(char * file, char* dir)
         getDirectoryList(dir,dirList,dirCount);
         int i;
         for(i = 0; i < dirCount; i ++){
-            return fileInDir(file,dirList[i]);
+           // printf("%s\n", dirList[i]);   
+            fileInDir(file,dirList[i]);
         }
     }
-    return 0;
+    return;
 }
 

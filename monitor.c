@@ -112,11 +112,13 @@ int main (int argc, char *argv[])
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
     getAllFiles(target,0); 
     printAllFiles();
-  
-    
-  //    int tid = getTID(globalFileList[10]);
-  //  printf("%d\n", tid);
+    /**
+    char * file = "target/dir2/dir13/dir7/file35";
+    char * dir = "target/dir2";
+    int tid = getTID(file);
+    printf("%d\n", tid);**/
     return 0;
+    
 }
 
 
