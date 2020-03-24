@@ -42,12 +42,15 @@ void getAllFiles(char* target, int depth)
 void printAllFiles()
 {
     int i;
+
+    printf("TID\t\tSize\t\tFile\n"); 
     for(i = 0 ; i < globalFileIndex; i ++){
-        char * file  = globalFileList[i];
-        int tid = getTID(file);
-        int size = getFileSize(file);
-        printf("[%d] %d  %s\n", tid, size,  globalFileList[i]);
+        char * file1  = globalFileList[i];
+        int tid1 = getTID(file1);
+        int size1 = getFileSize(file1);
+        printf("[%d]\t\t%d\t\t%s\n", tid1, size1, file1);
     }
+    printf("\n\n");
 }
 
 /**
@@ -110,7 +113,6 @@ void fileInDir(char * file, char* dir)
         getDirectoryList(dir,dirList,dirCount);
         int i;
         for(i = 0; i < dirCount; i ++){
-            // printf("%s\n", dirList[i]);   
             fileInDir(file,dirList[i]);
         }
     }
@@ -137,7 +139,6 @@ int comp(char* file1, char* file2)
  */
 void swap(char** file1, char** file2)
 {
-    //printf("Swapping %s with %s\n", file1,file2);
     char* temp = *file1;
     *file1 = *file2;
     *file2 = temp;
@@ -148,8 +149,7 @@ void swap(char** file1, char** file2)
  */
 void sortFileList()
 {
-    int finished = 0;
-    
+    int finished = 0; 
     while(!finished){
         int i;
         int didSwap = 0;

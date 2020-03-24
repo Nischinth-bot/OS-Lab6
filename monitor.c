@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <dirent.h>
 #include <math.h>
+#include <unistd.h>
 #include "config.h"
 #include "fileHandle.h"
 #include "mainThread.h"
@@ -110,14 +111,16 @@ int main (int argc, char *argv[])
     /*************************************************************/ 
 
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
-    getAllFiles(target,0); 
-    sortFileList(); 
-    printAllFiles();
-    /**
-      char * file = "target/dir2/dir13/dir7/file35";
-      char * dir = "target/dir2";
-      int tid = getTID(file);
-      printf("%d\n", tid);**/
+
+
+
+    while(1){
+        getAllFiles(target,0); 
+        sortFileList(); 
+        printAllFiles();
+        sleep(10);
+    }
+
     return 0;
 
 }
