@@ -112,13 +112,12 @@ int main (int argc, char *argv[])
 
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
 
-
-
-    while(1){
+    for(i = 0 ; i < 2; i ++){
         getAllFiles(target,0); 
         sortFileList(); 
         printAllFiles();
-        sleep(10);
+        globalFileIndex = 0;
+        sleep(5);
     }
 
     return 0;
