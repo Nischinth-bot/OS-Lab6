@@ -11,6 +11,7 @@ char ** threadFiles[MAXTHREADS]; //array of char** to hold the file list of each
 int listIndices[MAXTHREADS]; //structure that holds the current number of files in each thread.
 pthread_mutex_t mymutex =  PTHREAD_MUTEX_INITIALIZER;
 
+
 /**
  * Function executed by each thread.
  */
@@ -19,11 +20,11 @@ void* threadFunction(void * arg)
     pthread_mutex_lock(&mymutex);
     int tid = ((struct arg_struct *) arg) -> tid;
     char ** fileList = malloc(sizeof(char*) * MAXFILES);
+    threadFiles[tid] = malloc(sizeof(char*) * MAXFILES);
     getThreadFiles((struct arg_struct *) arg, fileList);    
-    printf("TID %d is monitoring : \n", tid);
     printFiles(threadFiles[tid], listIndices[tid]); 
-    pthread_exit(NULL);
     pthread_mutex_unlock(&mymutex);
+    pthread_exit(NULL);
 }
 
 /**
@@ -55,7 +56,6 @@ void getThreadFiles2(int tid, char* dir, char ** fileList)
         if(fileCount > 0){ 
             getFileList(dir, fileList, fileCount);
             copyFileList(threadFiles[tid], fileList, fileCount, tid);    
-            listIndices[tid] += fileCount;
         }
     }
     int dirCt = getDirectoryCount(dir);
@@ -74,10 +74,9 @@ void getThreadFiles2(int tid, char* dir, char ** fileList)
  */
 void copyFileList(char ** fileList1, char ** fileList2, int numFiles, int tid)
 {
-    int i;
+    int i;  
     for(i = 0; i < numFiles; i ++){
-        printf("%s\n", fileList2[i]);
-        //fileList1[listIndices[tid] ++] = fileList2[i];
+        fileList1[listIndices[tid]++] = fileList2[i];
     }
 }
 
