@@ -15,15 +15,15 @@ int signal = 0;
  */
 void getAllFiles(char* target, int depth)
 {
-    if(depth  > MAXDEPTH) return;
+    if(depth  > MAXDEPTH || numFiles >= MAXFILES) return;
     int fileCount = getFileCount(target); 
     int dirCount = getDirectoryCount(target);
     int i;
-    if(fileCount > 0){
+    if(fileCount > 0 && fileCount + numFiles < MAXFILES){
+        numFiles += fileCount;
         char ** fileList = (char **) malloc(sizeof(char*)* fileCount); 
         getFileList(target,fileList,fileCount);
         for(i = 0; i < fileCount; i ++){
-            numFiles ++;
             globalFileList[globalFileIndex++] = fileList[i]; //collect the files into the global variable
         }
     }

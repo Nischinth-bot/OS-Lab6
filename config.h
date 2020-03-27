@@ -4,7 +4,7 @@
 //determine them dynamically
 
 //maximum number of files across all of the subdirectories
-#define MAXFILES 100
+#define MAXFILES 30
 #define MAXTHREADS 100
 //maximum number of subdirectories of the target directory
 #define MAXDIRS 30
