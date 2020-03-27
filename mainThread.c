@@ -43,14 +43,21 @@ void printAllFiles()
 {
     int i;
 
-    printf("TID\t\tSize\t\tFile\n"); 
-    for(i = 0 ; i < globalFileIndex; i ++){
+    printf("TID\tSize\tFile\t\t\t\t"); 
+    printf("TID\tSize\tFile\n"); 
+    for(i = 0 ; i < globalFileIndex/2; i ++){
         char * file1  = globalFileList[i];
         int tid1 = getTID(file1);
         int size1 = getFileSize(file1);
-        printf("[%d]\t\t%d\t\t%s\n", tid1, size1, file1);
+        char * file2 = globalFileList[i + globalFileIndex/2];
+        int tid2 = getTID(file2);
+        int size2 = getFileSize(file2);
+        int len = strlen(file1);
+        printf("[%d]\t%d\t%s\t", tid1, size1, file1);  
+        if(len < 24) printf("\t");
+        printf("[%d]\t%d\t%s\n", tid2, size2, file2);
     }
-    printf("\n\n");
+    printf("\n");
 }
 
 /**
