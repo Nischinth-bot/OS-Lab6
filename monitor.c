@@ -112,10 +112,8 @@ int main (int argc, char *argv[])
 
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
     getAllFiles(target,0);
-    printf("%d\n", numFiles);
     for(i = 0; i < nThreads; i ++)
     {
-        printf("Dispatching %d\n", i);
         pthread_create(&threads[i], NULL, threadFunction, (void *)(&globalArgs[i]));
     }
     while(1){
