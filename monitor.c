@@ -9,7 +9,7 @@
 #include "config.h"
 #include "fileHandle.h"
 #include "mainThread.h"
-
+#include "monitorThread.h"
 
 
 
@@ -111,15 +111,20 @@ int main (int argc, char *argv[])
     /*************************************************************/ 
 
     globalFileList= (char **) malloc(sizeof(char *) * MAXFILES);
-
-    for(i = 0 ; i < 2; i ++){
-        getAllFiles(target,0); 
+    getAllFiles(target,0);
+    for(i = 0; i < nThreads; i ++)
+    {
+        printf("Dispatching %d\n", i);
+        pthread_create(&threads[i], NULL, threadFunction, (void *)(&globalArgs[i]));
+    }
+    while(1){
         sortFileList(); 
         printAllFiles();
-        globalFileIndex = 0;
-        sleep(5);
+        sleep(3);
     }
-
+    for(i = 0; i < nThreads; i ++){
+    pthread_join(threads[i], NULL);
+    }
     return 0;
 
 }

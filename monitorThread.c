@@ -11,19 +11,28 @@ char ** threadFiles[MAXTHREADS]; //array of char** to hold the file list of each
 int listIndices[MAXTHREADS]; //structure that holds the current number of files in each thread.
 pthread_mutex_t mymutex =  PTHREAD_MUTEX_INITIALIZER;
 
-
 /**
  * Function executed by each thread.
+ * Gets an original file list, and then loops indefinitely while 
+ * checking for changes in its file list.
+ * @param: arg 
  */
 void* threadFunction(void * arg)
 {
-    pthread_mutex_lock(&mymutex);
     int tid = ((struct arg_struct *) arg) -> tid;
     char ** fileList = malloc(sizeof(char*) * MAXFILES);
-    threadFiles[tid] = malloc(sizeof(char*) * MAXFILES);
+    threadFiles[tid] = malloc(sizeof(char*) * MAXFILES/globalThreadCount);
     getThreadFiles((struct arg_struct *) arg, fileList);    
-    printFiles(threadFiles[tid], listIndices[tid]); 
-    pthread_mutex_unlock(&mymutex);
+    while(1){
+        pthread_mutex_lock(&mymutex);
+        char ** temp = malloc(sizeof(char*) * MAXFILES); //assign a temp array of strings
+        int currentSize = listIndices[tid]; //size of the file list right now.
+        listIndices[tid] = 0;
+        getThreadFiles(arg,temp);           // get the files into temp
+        if(currentSize != listIndices[tid]) printf("Something changed... in %d\n", tid);
+        //printFiles(threadFiles[tid], listIndices[tid]); 
+        pthread_mutex_unlock(&mymutex);
+    }
     pthread_exit(NULL);
 }
 
@@ -33,7 +42,7 @@ void* threadFunction(void * arg)
  */
 void getThreadFiles(struct arg_struct * arg, char ** fileList)
 {
-     
+
     int dirCt = arg->numDirs;
     int tid = arg->tid;
     if(dirCt > 0){
@@ -50,9 +59,8 @@ void getThreadFiles(struct arg_struct * arg, char ** fileList)
  */
 void getThreadFiles2(int tid, char* dir, char ** fileList)
 {
-
     int fileCount = getFileCount(dir); 
-    if(listIndices[tid] + fileCount < MAXFILES) {
+    if(listIndices[tid] + fileCount < MAXFILES/globalThreadCount) {
         if(fileCount > 0){ 
             getFileList(dir, fileList, fileCount);
             copyFileList(threadFiles[tid], fileList, fileCount, tid);    
@@ -80,10 +88,13 @@ void copyFileList(char ** fileList1, char ** fileList2, int numFiles, int tid)
     }
 }
 
+
+
 void printFiles(char ** fileList, int numFiles)
 {
     int i;
     for(i = 0; i < numFiles; i ++){
-    printf("%s\n", fileList[i]);
+        printf("%s\n", fileList[i]);
     }
 }
+
